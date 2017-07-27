@@ -1,0 +1,12 @@
+numpy
+scipy
+pandas
+jupyter
+matplotlib
+seaborn
+sklearn
+tensorflow
+keras
+pillow
+tqdm
+
