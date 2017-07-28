@@ -102,3 +102,6 @@ ENV/
 
 # Data
 data/
+
+# PyCharm
+.idea/
