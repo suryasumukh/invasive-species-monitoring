@@ -51,15 +51,18 @@ class TrainDataGenerator(object):
             for img_path in _batch_imgs:
                 train_img = image.load_img(img_path)
                 train_pixels = image.img_to_array(train_img)
+                train_pixels = np.expand_dims(train_pixels, axis=0)
 
                 img_name = img_path.split('/')[-1].split('.')[0]
                 probability = self.target_dict[img_name]
 
-                batch_imgs.append(preprocess_input(train_pixels))
+                batch_imgs.append(train_pixels)
                 batch_targets.append(probability)
 
             _idx += self.batch_size
-            yield np.array(batch_imgs), np.array(batch_targets)
+            batch_imgs = np.vstack(batch_imgs).astype('float32')/255
+            batch_imgs = preprocess_input(batch_imgs)
+            yield batch_imgs, np.array(batch_targets)
 
 
 class TestDataGenerator(object):
@@ -89,7 +92,9 @@ class TestDataGenerator(object):
             for img_path in _batch_imgs:
                 test_img = image.load_img(img_path)
                 test_pixels = image.img_to_array(test_img)
-                batch_imgs.append(preprocess_input(test_pixels))
+                test_pixels = np.expand_dims(test_pixels, axis=0).astype('float32')/255
+                batch_imgs.append(test_pixels)
 
             _idx += self.batch_size
-            yield np.array(batch_imgs)
+            batch_imgs = np.vstack(batch_imgs)
+            yield preprocess_input(batch_imgs)
