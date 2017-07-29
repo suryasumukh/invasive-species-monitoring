@@ -18,26 +18,12 @@ class TrainDataGenerator(object):
     """
     A Wrapper class to load hydrangea train data
     """
-    TRAIN_DIR = os.path.join(DATA_DIR, 'train/*')
-    TRAIN_TARGET = os.path.join(DATA_DIR, 'train_labels.csv')
+    TRAIN_DATA = os.path.join(DATA_DIR, 'train_data_features.npz')
 
     def __init__(self, batch_size):
         self.batch_size = batch_size
-        self.train_imgs = glob(self.TRAIN_DIR)
-        self.nb_samples = len(self.train_imgs)
-        self.target_dict = self._load_targets()
-
-    def _load_targets(self):
-        """
-        load train prediction probabilities
-        :return: dict of filename, probability pairs
-        """
-        targets = {}
-        with open(self.TRAIN_TARGET, 'r') as file_:
-            for line in file_:
-                _img, _prob = line.split(',')
-                targets[_img] = _prob
-        return targets
+        self.train_data = np.load(self.TRAIN_DATA)
+        self.nb_samples = len(self.train_data['labels'])
 
     def next_batch(self):
         """
@@ -48,38 +34,23 @@ class TrainDataGenerator(object):
         while True:
             if _idx >= self.nb_samples:
                 _idx = 0
-            _batch_imgs = self.train_imgs[_idx: _idx+self.batch_size]
-
-            batch_imgs = []
-            batch_targets = []
-
-            for img_path in _batch_imgs:
-                train_img = image.load_img(img_path)
-                train_pixels = image.img_to_array(train_img)
-                train_pixels = np.expand_dims(train_pixels, axis=0)
-
-                img_name = img_path.split('/')[-1].split('.')[0]
-                probability = self.target_dict[img_name]
-
-                batch_imgs.append(train_pixels)
-                batch_targets.append(probability)
+            batch_imgs = self.train_data['features'][_idx: _idx+self.batch_size]
+            batch_targets = self.train_data['labels'][_idx: _idx+self.batch_size]
 
             _idx += self.batch_size
-            batch_imgs = np.vstack(batch_imgs).astype('float32')/255
-            batch_imgs = preprocess_input(batch_imgs)
-            yield batch_imgs, np.array(batch_targets)
+            yield batch_imgs, batch_targets
 
 
 class TestDataGenerator(object):
     """
     A wrapper to load hydrangea test data
     """
-    TEST_DIR = os.path.join(DATA_DIR, 'test/*')
+    TEST_DATA = os.path.join(DATA_DIR, 'test_data.npy')
 
     def __init__(self, batch_size):
         self.batch_size = batch_size
-        self.test_imgs = glob(self.TEST_DIR)
-        self.nb_samples = len(self.test_imgs)
+        self.test_data = np.load(self.TEST_DATA)
+        self.nb_samples = self.test_data.shape[0]
 
     def next_batch(self):
         """
@@ -90,19 +61,9 @@ class TestDataGenerator(object):
         while True:
             if _idx >= self.nb_samples:
                 _idx = 0
-            _batch_imgs = self.test_imgs[_idx: _idx+self.batch_size]
-
-            batch_imgs = []
-
-            for img_path in _batch_imgs:
-                test_img = image.load_img(img_path)
-                test_pixels = image.img_to_array(test_img)
-                test_pixels = np.expand_dims(test_pixels, axis=0).astype('float32')/255
-                batch_imgs.append(test_pixels)
-
+            batch_imgs = self.test_data[_idx: _idx+self.batch_size]
             _idx += self.batch_size
-            batch_imgs = np.vstack(batch_imgs)
-            yield preprocess_input(batch_imgs)
+            yield batch_imgs
 
 
 def load_train_data():
